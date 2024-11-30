@@ -1,59 +1,76 @@
-# AngularAsyncTesting
+# Angular: Testing Asynchronous Code
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.0.2.
+This project contains systematic examples for the blog article 
+[Angular: Asynchronous Testing Recipe](https://enji.systems/2024/12/09/angular-asynchronous-testing-recipe.html).
 
-## Development server
+The code under test is contained in the following components:
 
-To start a local development server, run:
+ * [AsyncComponent](src/app/async/async.component.ts)
+ * [ObservableComponent](src/app/observable/observable.component.ts)
+ * [PromiseComponent](src/app/promise/promise.component.ts)
+ * [SignalComponent](src/app/signal/signal.component.ts)
 
-```bash
-ng serve
-```
+Each of these components has the following functions:
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+ * `immediate()`: Returns an asynchronous object (corresponding to the component's name) that is executed immediately. 
+ * `delayed()`: Returns an asynchronous object (corresponding to the component's name) that is executed after a delay of 1 second (via setTimeout()).
+ * `indirectImmediate()`: Invokes `immediate()`, and sets the components `value` variable to the resolved value.
+ * `indirectDelayed()`: Invokes `immediate()`, and sets the components `value` variable to the resolved value.
 
-## Code scaffolding
+The tests invoke these methods and assert the results using different mechanisms. Some of the tests fail
+because not all mechanisms are suitable for testing each kind of asynchronous code. Also beware that some
+tests seem to pass, but only because the contained assertions are not executed while the test is running.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+The following tables provide an overview of the tests and their outcomes for each type of component. Abbreviations used:
 
-```bash
-ng generate component component-name
-```
+ * n/a: not applicable
+ * n/n: not necessary
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## AsyncComponent / PromiseComponent
 
-```bash
-ng generate --help
-```
+Since the `async` function declaration provides syntactic sugar for Promise handling, the tests and results for both components are identical.
 
-## Building
+| Test               | immediate() | delayed() | indirectImmediate() | indirectDelayed() |
+|--------------------|-------------|-----------|---------------------|-------------------|
+| basic              | &cross;     | &cross;   | &cross;             | &cross;           |
+| async / await      | &check;     | &check;   | n/a                 | n/a               |
+| callback           | &check;     | &check;   | &cross;             | &cross;           |
+| waitForAsync       | &check;     | &check;   | &cross;             | &cross;           |
+| + whenStable       | n/n         | n/n       | &check;             | &check;           |
+| + await whenStable | n/n         | n/n       | &check;             | &check;           |
+| fakeAsync          | &check;     | &check;   | &cross;             | &cross;           |
+| + tick()           | n/n         | n/n       | &check;             | &cross;           |
+| + tick(...)        | n/n         | n/n       | &check;             | &check;           |
+| + flush            | n/n         | n/n       | &check;             | &check;           |
+| + flushMicrotasks  | n/n         | n/n       | &check;             | &cross;           |
 
-To build the project run:
+## ObservableComponent
 
-```bash
-ng build
-```
+| Test               | immediate() | delayed() | indirectImmediate() | indirectDelayed() |
+|--------------------|-------------|-----------|---------------------|-------------------|
+| basic              | &check;     | &cross;   | &check;             | &cross;           |
+| callback           | &check;     | &check;   | &check;             | &cross;           |
+| waitForAsync       | &check;     | &check;   | &check;             | &cross;           |
+| + whenStable       | n/n         | n/n       | n/n                 | &check;           |
+| + await whenStable | n/n         | n/n       | n/n                 | &check;           |
+| fakeAsync          | &check;     | &check;   | &check;             | &cross;           |
+| + tick()           | n/n         | n/n       | n/n                 | &cross;           |
+| + tick(...)        | n/n         | n/n       | n/n                 | &check;           |
+| + flush            | n/n         | n/n       | n/n                 | &cross;           |
+| + flushMicrotasks  | n/n         | n/n       | n/n                 | &cross;           |
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## SignalComponent
 
-## Running unit tests
+| Test               | immediate() | delayed() | indirectImmediate() | indirectDelayed() |
+|--------------------|-------------|-----------|---------------------|-------------------|
+| basic              | &check;     | &cross;   | &check;             | &cross;           |
+| callback           | &check;     | &cross;   | &check;             | &cross;           |
+| waitForAsync       | &check;     | &cross;   | &check;             | &cross;           |
+| + whenStable       | n/n         | &check;   | n/n                 | &check;           |
+| + await whenStable | n/n         | &check;   | n/n                 | &check;           |
+| fakeAsync          | &check;     | &cross;   | &check;             | &cross;           |
+| + tick()           | n/n         | &cross;   | n/n                 | &cross;           |
+| + tick(...)        | n/n         | &check;   | n/n                 | &check;           |
+| + flush            | n/n         | &check;   | n/n                 | &check;           |
+| + flushMicrotasks  | n/n         | &cross;   | n/n                 | &cross;           |
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
